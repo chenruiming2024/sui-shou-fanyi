@@ -1,0 +1,37 @@
+{
+    "build":  {
+                  "frontendDist":  "../dist",
+                  "beforeBuildCommand":  "npm run build",
+                  "devUrl":  "http://localhost:1420",
+                  "beforeDevCommand":  "npm run dev"
+              },
+    "version":  "1.0.0",
+    "bundle":  {
+                  "active":  true,
+                  "icon":  [
+                               "icons/icon.png",
+                               "icons/icon.ico"
+                           ],
+                   "targets":  "nsis"
+              },
+    "app":  {
+                "security":  {
+                                 "csp":  null
+                             },
+                "windows":  [
+                                {
+                                    "width":  800,
+                                    "height":  560,
+                                    "minWidth":  640,
+                                    "transparent":  true,
+                                    "decorations":  false,
+                                    "minHeight":  480,
+                                    "title":  "\u968f\u624b\u7ffb\u8bd1",
+                                    "resizable":  true,
+                                    "center":  true
+                                }
+                            ]
+            },
+    "identifier":  "com.suishoufanyi.app",
+    "productName":  "SuiShouFanYi"
+}

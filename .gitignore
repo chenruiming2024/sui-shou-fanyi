@@ -1,0 +1,32 @@
+﻿# Node
+node_modules/
+
+# Build output
+dist/
+
+# Rust / Cargo build artifacts
+src-tauri/target/
+
+# Database & config with sensitive data
+*.db
+config.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
