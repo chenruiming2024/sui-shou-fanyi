@@ -30,3 +30,6 @@ Desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# Release binaries (use GitHub Releases instead)
+releases/
