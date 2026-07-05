@@ -160,10 +160,6 @@ export function SettingsPanel() {
                 <Switch checked={store.clipboardWatch} onChange={(v) => store.setClipboardWatch(v)} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700 dark:text-gray-200">窗口置顶</span>
-                <Switch checked={store.alwaysOnTop} onChange={(v) => store.setAlwaysOnTop(v)} />
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700 dark:text-gray-200">全局快捷键</span>
                 <ShortcutRecorder value={store.shortcut} onChange={handleShortcutChange} />
               </div>

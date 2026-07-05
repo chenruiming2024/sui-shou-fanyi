@@ -1,4 +1,4 @@
-import { Minus, Maximize2, X, Settings, History } from "lucide-react";
+import { Minus, Maximize2, X, Settings, History, Pin } from "lucide-react";
 import { minimizeWindow, toggleMaximize, hideWindow } from "../../lib/invoke";
 import { useSettingsStore } from "../../store/settingsStore";
 import { useHistoryStore } from "../../store/historyStore";
@@ -22,6 +22,17 @@ export function TitleBar() {
         </button>
         <button onClick={() => { historyStore.toggle(); if (!historyStore.isOpen) historyStore.fetch(); }} className="w-9 h-7 flex items-center justify-center rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors" title={"历史记录"}>
           <History size={14} className="text-gray-500 dark:text-gray-400" />
+        </button>
+        <button
+          onClick={() => settingsStore.setAlwaysOnTop(!settingsStore.alwaysOnTop)}
+          className={`w-9 h-7 flex items-center justify-center rounded-md transition-colors ${
+            settingsStore.alwaysOnTop
+              ? "bg-blue-500/15 hover:bg-blue-500/25"
+              : "hover:bg-gray-200/60 dark:hover:bg-gray-700/60"
+          }`}
+          title={settingsStore.alwaysOnTop ? "取消置顶" : "窗口置顶"}
+        >
+          <Pin size={14} className={settingsStore.alwaysOnTop ? "text-blue-500" : "text-gray-500 dark:text-gray-400"} />
         </button>
         <button onClick={() => minimizeWindow()} className="w-9 h-7 flex items-center justify-center rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors">
           <Minus size={14} className="text-gray-500 dark:text-gray-400" />
