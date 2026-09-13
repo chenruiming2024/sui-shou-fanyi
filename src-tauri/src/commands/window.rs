@@ -1,5 +1,7 @@
+use std::sync::Mutex;
 use tauri::Manager;
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState, Modifiers, Code};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState, Modifiers, Code, ShortcutEvent};
+use crate::services::db::AppState;
 
 fn parse_shortcut_str(s: &str) -> Result<Shortcut, String> {
     // Try standard parse first
@@ -96,20 +98,57 @@ pub fn set_always_on_top(app: tauri::AppHandle, always_on_top: bool) -> Result<(
     Ok(())
 }
 
+/// 当前已注册的全局快捷键（应用内只维护这一个）。
+pub struct CurrentShortcut(pub Mutex<Option<Shortcut>>);
+
+fn handle_shortcut_event(app: &tauri::AppHandle, _shortcut: &Shortcut, event: ShortcutEvent) {
+    if event.state == ShortcutState::Pressed {
+        crate::show_main_window(app);
+    }
+}
+
+fn register_new(app: &tauri::AppHandle, new_shortcut: Shortcut) -> Result<(), String> {
+    app.global_shortcut()
+        .on_shortcut(new_shortcut, handle_shortcut_event)
+        .map_err(|e| format!("注册失败，快捷键可能已被其他程序占用: {e}"))
+}
+
+/// 注册新快捷键并替换旧注册；新键注册失败时旧键保持不变。
+pub fn set_shortcut(app: &tauri::AppHandle, shortcut_str: &str) -> Result<(), String> {
+    let new_shortcut = parse_shortcut_str(shortcut_str)?;
+    let state = app.state::<CurrentShortcut>();
+    let mut current = state.0.lock().map_err(|e| e.to_string())?;
+    if current.as_ref() == Some(&new_shortcut) {
+        return Ok(());
+    }
+    register_new(app, new_shortcut)?;
+    if let Some(old) = current.take() {
+        let _ = app.global_shortcut().unregister(old);
+    }
+    *current = Some(new_shortcut);
+    Ok(())
+}
+
+/// 仅当尚未注册任何快捷键时才注册（启动 / 重试路径），已注册时返回 Ok(false)。
+pub fn register_if_unset(app: &tauri::AppHandle, shortcut_str: &str) -> Result<bool, String> {
+    let new_shortcut = parse_shortcut_str(shortcut_str)?;
+    let state = app.state::<CurrentShortcut>();
+    let mut current = state.0.lock().map_err(|e| e.to_string())?;
+    if current.is_some() {
+        return Ok(false);
+    }
+    register_new(app, new_shortcut)?;
+    *current = Some(new_shortcut);
+    Ok(true)
+}
+
 #[tauri::command]
 pub fn register_shortcut(app: tauri::AppHandle, shortcut_str: String) -> Result<(), String> {
-    let shortcut = parse_shortcut_str(&shortcut_str)?;
-    app.global_shortcut().unregister_all().map_err(|e| e.to_string())?;
-    app.global_shortcut().on_shortcut(
-        shortcut,
-        |app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        },
-    ).map_err(|e| e.to_string())?;
+    set_shortcut(&app, &shortcut_str)?;
+    // 注册成功后持久化到 config 表，下次启动由 Rust 侧直接注册
+    let db = app.state::<AppState>();
+    if let Err(e) = db.set_config_value("shortcut", &shortcut_str) {
+        eprintln!("[shortcut] 快捷键持久化失败: {e}");
+    }
     Ok(())
 }

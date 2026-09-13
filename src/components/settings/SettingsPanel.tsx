@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Sun, Moon, Monitor, Download, Trash2, Eye, EyeOff, Save } from "lucide-react";
 import { useSettingsStore } from "../../store/settingsStore";
@@ -19,6 +19,8 @@ export function SettingsPanel() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const showToast = useToastStore((s) => s.show);
+  // 最近一次注册成功的快捷键，用于注册失败时回退
+  const lastRegisteredRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (store.isOpen) {
@@ -30,9 +32,24 @@ export function SettingsPanel() {
   }, [store.isOpen]);
 
   useEffect(() => {
-    if (store.shortcut) {
-      registerShortcut(store.shortcut).catch(() => {});
-    }
+    const shortcut = store.shortcut;
+    if (!shortcut) return;
+    registerShortcut(shortcut)
+      .then(() => {
+        lastRegisteredRef.current = shortcut;
+      })
+      .catch(() => {
+        const fallback = lastRegisteredRef.current;
+        showToast(
+          fallback
+            ? `快捷键 ${shortcut} 注册失败（可能已被其他程序占用），已恢复为 ${fallback}`
+            : `快捷键 ${shortcut} 注册失败（可能已被其他程序占用），请在设置中更换组合键`,
+          "error"
+        );
+        if (fallback && fallback !== shortcut) {
+          store.setShortcut(fallback);
+        }
+      });
   }, [store.shortcut]);
 
   const handleSave = async () => {

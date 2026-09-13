@@ -40,4 +40,20 @@ impl AppState {
         }
         Ok(serde_json::Value::Object(map))
     }
+
+    pub fn get_config_value(&self, key: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare("SELECT value FROM config WHERE key = ?1")?;
+        let mut rows = stmt.query_map([key], |row| row.get::<_, String>(0))?;
+        Ok(rows.next().transpose()?)
+    }
+
+    pub fn set_config_value(&self, key: &str, value: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        conn.execute(
+            "INSERT OR REPLACE INTO config (key, value) VALUES (?1, ?2)",
+            rusqlite::params![key, value],
+        )?;
+        Ok(())
+    }
 }
