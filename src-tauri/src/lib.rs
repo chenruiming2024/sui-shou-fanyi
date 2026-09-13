@@ -11,12 +11,25 @@ use tauri::{
     Manager,
 };
 
-/// 唤起主窗口（显示、还原最小化、聚焦），全局快捷键 / 托盘 / 单实例共用。
+/// 唤起主窗口（显示、还原最小化、聚焦），托盘 / 单实例共用。
 pub fn show_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
         let _ = window.unminimize();
         let _ = window.set_focus();
+    }
+}
+
+/// 全局快捷键切换主窗口：可见且有焦点时隐藏（与关闭按钮一致，收进托盘），否则唤起。
+pub fn toggle_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let visible = window.is_visible().unwrap_or(false);
+        let focused = window.is_focused().unwrap_or(false);
+        if visible && focused {
+            let _ = window.hide();
+        } else {
+            show_main_window(app);
+        }
     }
 }
 

@@ -103,7 +103,7 @@ pub struct CurrentShortcut(pub Mutex<Option<Shortcut>>);
 
 fn handle_shortcut_event(app: &tauri::AppHandle, _shortcut: &Shortcut, event: ShortcutEvent) {
     if event.state == ShortcutState::Pressed {
-        crate::show_main_window(app);
+        crate::toggle_main_window(app);
     }
 }
 
