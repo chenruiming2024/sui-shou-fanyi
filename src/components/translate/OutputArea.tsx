@@ -1,29 +1,15 @@
 import { motion } from "framer-motion";
 import { Copy, Volume2 } from "lucide-react";
 import { useTranslateStore } from "../../store/translateStore";
-import { useToastStore } from "../../store/toastStore";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { useState } from "react";
+import { speak } from "../../lib/speech";
+import { useCopy } from "../../hooks/useCopy";
 
 export function OutputArea() {
   const { outputText, isTranslating, error } = useTranslateStore();
-  const [copied, setCopied] = useState(false);
-  const showToast = useToastStore((s) => s.show);
+  const { copied, copy } = useCopy();
 
-  const handleCopy = async () => {
-    if (!outputText) return;
-    await writeText(outputText);
-    setCopied(true);
-    showToast("译文已复制到剪贴板", "success");
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  const handleSpeak = () => {
-    if (!outputText) return;
-    const utterance = new SpeechSynthesisUtterance(outputText);
-    utterance.lang = /[\u4e00-\u9fff]/.test(outputText) ? "zh-CN" : "en-US";
-    speechSynthesis.speak(utterance);
-  };
+  const handleCopy = () => copy(outputText, "译文已复制到剪贴板");
+  const handleSpeak = () => speak(outputText);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-800/50">

@@ -22,7 +22,7 @@ export function MainLayout() {
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 shrink-0">
         <LanguageSelector value={fromLang} onChange={(l) => useTranslateStore.getState().setFromLang(l)} />
         <SwapButton />
-        <LanguageSelector value={toLang} onChange={(l) => useTranslateStore.getState().setToLang(l)} excludeAuto align="right" />
+        <LanguageSelector value={toLang} onChange={(l) => useTranslateStore.getState().setToLang(l)} align="right" />
       </div>
 
       {/* Input + Output */}

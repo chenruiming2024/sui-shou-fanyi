@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 export function SearchBar() {
   const store = useHistoryStore();
   const [kw, setKw] = useState("");
-  useEffect(() => { const t = setTimeout(() => { store.setSearchKeyword(kw); store.search(kw); }, 300); return () => clearTimeout(t); }, [kw]);
+  useEffect(() => { const t = setTimeout(() => { store.search(kw); }, 300); return () => clearTimeout(t); }, [kw]);
   return (
     <div className="relative">
       <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />

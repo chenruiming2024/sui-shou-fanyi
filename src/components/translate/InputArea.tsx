@@ -1,35 +1,22 @@
-import { useState } from "react";
 import { Copy, Volume2, X } from "lucide-react";
 import { useTranslateStore } from "../../store/translateStore";
-import { useToastStore } from "../../store/toastStore";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { speak } from "../../lib/speech";
+import { useCopy } from "../../hooks/useCopy";
+import { MAX_CHARS } from "../../lib/constants";
 
 export function InputArea() {
   const { inputText, setInputText } = useTranslateStore();
-  const [copied, setCopied] = useState(false);
-  const showToast = useToastStore((s) => s.show);
+  const { copied, copy } = useCopy();
 
-  const handleCopy = async () => {
-    if (!inputText) return;
-    await writeText(inputText);
-    setCopied(true);
-    showToast("原文已复制到剪贴板", "success");
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  const handleSpeak = () => {
-    if (!inputText) return;
-    const utterance = new SpeechSynthesisUtterance(inputText);
-    utterance.lang = /[\u4e00-\u9fff]/.test(inputText) ? "zh-CN" : "en-US";
-    speechSynthesis.speak(utterance);
-  };
+  const handleCopy = () => copy(inputText, "原文已复制到剪贴板");
+  const handleSpeak = () => speak(inputText);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <textarea
         value={inputText}
         onChange={(e) => {
-          if (e.target.value.length <= 5000) setInputText(e.target.value);
+          if (e.target.value.length <= MAX_CHARS) setInputText(e.target.value);
         }}
         placeholder="输入要翻译的文本"
         className="flex-1 resize-none bg-transparent text-base leading-relaxed p-4 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"

@@ -10,7 +10,7 @@ import { Toast } from "./components/common/Toast";
 export default function App() {
   useTheme();
   const { alwaysOnTop } = useSettingsStore();
-  const { message, type, visible, hide } = useToastStore();
+  const { message, type, hide } = useToastStore();
 
   useEffect(() => {
     setAlwaysOnTop(alwaysOnTop).catch(() => {});
@@ -20,7 +20,7 @@ export default function App() {
     <div className="h-screen w-screen flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden">
       <TitleBar />
       <MainLayout />
-      {visible && message && (
+      {message && (
         <Toast
           message={message}
           type={type}

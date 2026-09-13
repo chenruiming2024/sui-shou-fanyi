@@ -1,17 +1,16 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { LANG_OPTIONS } from "../../lib/constants";
 
-interface Props { value: string; onChange: (code: string) => void; excludeAuto?: boolean; align?: "left" | "right"; }
+interface Props { value: string; onChange: (code: string) => void; align?: "left" | "right"; }
 
-export function LanguageSelector({ value, onChange, excludeAuto, align = "left" }: Props) {
+export function LanguageSelector({ value, onChange, align = "left" }: Props) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const options = LANG_OPTIONS;
   const current = options.find(o => o.code === value);
 
   return (
-    <div className="relative" ref={ref} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseLeave={() => setOpen(false)}>
       <button onClick={() => setOpen(!open)}
         className="flex items-center gap-1 h-8 px-3 rounded-full text-sm font-medium transition-all duration-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
         {current?.label || value}

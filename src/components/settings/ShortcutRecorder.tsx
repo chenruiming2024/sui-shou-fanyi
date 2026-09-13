@@ -1,39 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Keyboard } from "lucide-react";
 
 interface Props { value: string; onChange: (v: string) => void; }
 
-const keyToCode: Record<string, string> = {
-  "A": "KeyA", "B": "KeyB", "C": "KeyC", "D": "KeyD", "E": "KeyE",
-  "F": "KeyF", "G": "KeyG", "H": "KeyH", "I": "KeyI", "J": "KeyJ",
-  "K": "KeyK", "L": "KeyL", "M": "KeyM", "N": "KeyN", "O": "KeyO",
-  "P": "KeyP", "Q": "KeyQ", "R": "KeyR", "S": "KeyS", "T": "KeyT",
-  "U": "KeyU", "V": "KeyV", "W": "KeyW", "X": "KeyX", "Y": "KeyY",
-  "Z": "KeyZ",
-  "0": "Digit0", "1": "Digit1", "2": "Digit2", "3": "Digit3", "4": "Digit4",
-  "5": "Digit5", "6": "Digit6", "7": "Digit7", "8": "Digit8", "9": "Digit9",
-  "F1": "F1", "F2": "F2", "F3": "F3", "F4": "F4", "F5": "F5",
-  "F6": "F6", "F7": "F7", "F8": "F8", "F9": "F9", "F10": "F10",
-  "F11": "F11", "F12": "F12",
-  "Escape": "Escape", "Tab": "Tab", "Space": "Space",
-  "Enter": "Enter", "Backspace": "Backspace", "Delete": "Delete",
-  "ArrowUp": "ArrowUp", "ArrowDown": "ArrowDown", "ArrowLeft": "ArrowLeft", "ArrowRight": "ArrowRight",
-  "Home": "Home", "End": "End", "PageUp": "PageUp", "PageDown": "PageDown",
-  "Insert": "Insert",
-};
-
 export function ShortcutRecorder({ value, onChange }: Props) {
   const [recording, setRecording] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  const formatShortcut = useCallback((parts: string[]): string => {
-    const modifiers = parts.filter(p => ["Ctrl", "Shift", "Alt", "Meta"].includes(p));
-    const key = parts.find(p => !["Ctrl", "Shift", "Alt", "Meta"].includes(p));
-    if (!key) return "";
-    const code = keyToCode[key] || key;
-    const modStr = modifiers.join("+");
-    return modStr ? `${modStr}+${code}` : code;
-  }, []);
 
   useEffect(() => {
     if (!recording) return;
@@ -55,14 +27,12 @@ export function ShortcutRecorder({ value, onChange }: Props) {
 
       if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
 
-      const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      // 后端 parse_shortcut_str 同时接受裸键名与 Code 形式（"T" | "KeyT"）
+      const key = e.key === " " ? "Space" : e.key.length === 1 ? e.key.toUpperCase() : e.key;
       parts.push(key);
 
-      const formatted = formatShortcut(parts);
-      if (formatted) {
-        onChange(formatted);
-        setRecording(false);
-      }
+      onChange(parts.join("+"));
+      setRecording(false);
     };
 
     document.addEventListener("keydown", handleKeyDown, true);
@@ -78,7 +48,7 @@ export function ShortcutRecorder({ value, onChange }: Props) {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [recording, onChange, formatShortcut]);
+  }, [recording, onChange]);
 
   const displayValue = value
     .replace(/Key([A-Z])/g, "$1")

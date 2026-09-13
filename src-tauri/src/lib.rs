@@ -8,10 +8,8 @@ use tauri::{
     menu::{Menu, MenuItem},
     Manager,
 };
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 pub fn run() {
-    env_logger::init();
     let state = AppState::new().expect("Failed to initialize database");
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
@@ -21,16 +19,13 @@ pub fn run() {
                 let _ = window.unminimize();
             }
         }))
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
         .manage(state)
         .invoke_handler(tauri::generate_handler![
             commands::translate::translate,
-            commands::clipboard::read_clipboard,
             commands::history::get_history,
             commands::history::search_history,
             commands::history::add_history,
@@ -42,7 +37,6 @@ pub fn run() {
             commands::window::toggle_maximize,
             commands::window::hide_window,
             commands::window::set_always_on_top,
-            commands::window::start_dragging,
             commands::window::register_shortcut,
         ])
         .setup(|app| {
@@ -80,20 +74,6 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
-
-            // Register default global shortcut ALT+T
-            let shortcut = Shortcut::new(Some(Modifiers::ALT), Code::KeyT);
-            let _ = app.global_shortcut().on_shortcut(
-                shortcut,
-                |app, _shortcut, event| {
-                    if event.state == ShortcutState::Pressed {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                },
-            );
             Ok(())
         })
         .on_window_event(|window, event| {

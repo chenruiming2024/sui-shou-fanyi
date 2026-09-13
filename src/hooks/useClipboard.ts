@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { readClipboard } from "../lib/invoke";
+import { readText } from "@tauri-apps/plugin-clipboard-manager";
 
 export function useClipboard(enabled: boolean) {
   const [lastText, setLastText] = useState("");
@@ -10,7 +10,7 @@ export function useClipboard(enabled: boolean) {
     if (!enabled) { if (intervalRef.current) clearInterval(intervalRef.current); return; }
     intervalRef.current = setInterval(async () => {
       try {
-        const text = await readClipboard();
+        const text = await readText();
         if (text && text !== lastText && text.length > 2 && text.length < 500) {
           setLastText(text);
           if (/[\u4e00-\u9fff]/.test(text) || /[a-zA-Z]{3,}/.test(text)) {

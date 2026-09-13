@@ -1,2 +1,0 @@
-export interface AppConfig { appid: string; secret_key: string; theme: ThemeMode; shortcut: string; auto_start: boolean; clipboard_watch: boolean; always_on_top: boolean; }
-export type ThemeMode = "light" | "dark" | "system";

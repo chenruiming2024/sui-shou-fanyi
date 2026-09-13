@@ -1,2 +1,1 @@
-import type { ViteDevServer } from "vite";
-declare module "*.tsx" {}
+/// <reference types="vite/client" />

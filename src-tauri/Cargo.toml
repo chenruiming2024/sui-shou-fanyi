@@ -9,9 +9,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
-tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
-tauri-plugin-notification = "2"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-fs = "2"
@@ -19,14 +17,9 @@ tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
 rusqlite = { version = "0.31", features = ["bundled"] }
-arboard = "3"
 md5 = "0.7"
 rand = "0.8"
-chrono = { version = "0.4", features = ["serde"] }
-log = "0.4"
-env_logger = "0.11"
 dirs-next = "2"
 
 [build-dependencies]

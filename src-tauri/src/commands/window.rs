@@ -97,14 +97,6 @@ pub fn set_always_on_top(app: tauri::AppHandle, always_on_top: bool) -> Result<(
 }
 
 #[tauri::command]
-pub fn start_dragging(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("main") {
-        w.start_dragging().map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-#[tauri::command]
 pub fn register_shortcut(app: tauri::AppHandle, shortcut_str: String) -> Result<(), String> {
     let shortcut = parse_shortcut_str(&shortcut_str)?;
     app.global_shortcut().unregister_all().map_err(|e| e.to_string())?;
