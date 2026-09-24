@@ -1,4 +1,4 @@
-﻿use crate::services::db::AppState;
+use crate::services::db::AppState;
 use std::collections::HashMap;
 use tauri::State;
 

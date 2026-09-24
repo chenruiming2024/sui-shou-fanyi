@@ -1,4 +1,4 @@
-﻿mod commands;
+mod commands;
 mod services;
 mod utils;
 
@@ -49,9 +49,14 @@ fn spawn_shortcut_retry(app_handle: tauri::AppHandle, shortcut_str: String) {
                 return; // 应用正在退出
             }
             match rx.recv_timeout(std::time::Duration::from_secs(30)) {
-                // Ok(true)=本次注册成功；Ok(false)=用户已从设置页注册了其他快捷键，放弃重试
-                Ok(Ok(_)) => {
+                // 本次重试注册成功
+                Ok(Ok(true)) => {
                     eprintln!("[shortcut] 全局快捷键 {shortcut_str} 重试注册成功");
+                    return;
+                }
+                // 用户已从设置页注册了其他快捷键，放弃重试
+                Ok(Ok(false)) => {
+                    eprintln!("[shortcut] 快捷键已由设置页注册，放弃 {shortcut_str} 的重试");
                     return;
                 }
                 Ok(Err(_)) => continue,

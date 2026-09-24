@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Sun, Moon, Monitor, Download, Trash2, Eye, EyeOff, Save } from "lucide-react";
 import { useSettingsStore } from "../../store/settingsStore";
@@ -9,6 +9,7 @@ import { ShortcutRecorder } from "./ShortcutRecorder";
 import { Switch } from "../common/Switch";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { getVersion } from "@tauri-apps/api/app";
 import type { ThemeMode } from "../../types/translate";
 
 export function SettingsPanel() {
@@ -18,9 +19,15 @@ export function SettingsPanel() {
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // 版本号取自构建产物（tauri.conf.json / Cargo.toml），避免 UI 里再硬编码一份
+  const [appVersion, setAppVersion] = useState("");
   const showToast = useToastStore((s) => s.show);
   // 最近一次注册成功的快捷键，用于注册失败时回退
   const lastRegisteredRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (store.isOpen) {
@@ -38,12 +45,14 @@ export function SettingsPanel() {
       .then(() => {
         lastRegisteredRef.current = shortcut;
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        // 后端按原因返回不同文案（缺修饰键 / 不支持的按键 / 已被占用），原样透出
+        const reason = typeof err === "string" && err ? err : `快捷键 ${shortcut} 注册失败`;
         const fallback = lastRegisteredRef.current;
         showToast(
           fallback
-            ? `快捷键 ${shortcut} 注册失败（可能已被其他程序占用），已恢复为 ${fallback}`
-            : `快捷键 ${shortcut} 注册失败（可能已被其他程序占用），请在设置中更换组合键`,
+            ? `${reason}，已恢复为 ${fallback}`
+            : `${reason}，请在设置中更换组合键`,
           "error"
         );
         if (fallback && fallback !== shortcut) {
@@ -192,7 +201,7 @@ export function SettingsPanel() {
               </button>
             </div>
             <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500">随手翻译 v1.0.0 · 基于百度翻译 API</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">随手翻译{appVersion ? ` v${appVersion}` : ""} · 基于百度翻译 API</p>
             </div>
           </div>
         </motion.div>

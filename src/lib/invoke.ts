@@ -1,4 +1,4 @@
-﻿import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import type { TranslateRequest, TranslateResult, HistoryItem } from "../types/translate";
 
 export async function translate(req: TranslateRequest): Promise<TranslateResult> { return invoke("translate", { req }); }

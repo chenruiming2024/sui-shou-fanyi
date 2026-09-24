@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { setAlwaysOnTop } from "./lib/invoke";
 import { useTheme } from "./hooks/useTheme";
 import { useSettingsStore } from "./store/settingsStore";

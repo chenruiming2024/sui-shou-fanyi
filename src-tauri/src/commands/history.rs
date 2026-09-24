@@ -1,4 +1,4 @@
-﻿use crate::services::db::AppState;
+use crate::services::db::AppState;
 use serde::Serialize;
 use tauri::State;
 

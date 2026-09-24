@@ -3,63 +3,88 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState, Modifiers, Code, ShortcutEvent};
 use crate::services::db::AppState;
 
-fn parse_shortcut_str(s: &str) -> Result<Shortcut, String> {
-    // Try standard parse first
-    if let Ok(shortcut) = s.parse::<Shortcut>() {
-        return Ok(shortcut);
-    }
-
-    // Custom parse: "Alt+T" or "Alt+KeyT" style
-    let parts: Vec<&str> = s.split('+').collect();
-    if parts.is_empty() {
-        return Err("Empty shortcut".to_string());
-    }
-
-    let key_part = parts.last().unwrap();
-    let key_code = match *key_part {
+/// 主键名 -> Code，大小写不敏感（"T"/"KeyT"/"t" 等价）。
+fn key_code_of(key_part: &str) -> Option<Code> {
+    let k = key_part.to_uppercase();
+    Some(match k.as_str() {
         // Single letters
-        "A" | "KeyA" => Code::KeyA, "B" | "KeyB" => Code::KeyB, "C" | "KeyC" => Code::KeyC,
-        "D" | "KeyD" => Code::KeyD, "E" | "KeyE" => Code::KeyE, "F" | "KeyF" => Code::KeyF,
-        "G" | "KeyG" => Code::KeyG, "H" | "KeyH" => Code::KeyH, "I" | "KeyI" => Code::KeyI,
-        "J" | "KeyJ" => Code::KeyJ, "K" | "KeyK" => Code::KeyK, "L" | "KeyL" => Code::KeyL,
-        "M" | "KeyM" => Code::KeyM, "N" | "KeyN" => Code::KeyN, "O" | "KeyO" => Code::KeyO,
-        "P" | "KeyP" => Code::KeyP, "Q" | "KeyQ" => Code::KeyQ, "R" | "KeyR" => Code::KeyR,
-        "S" | "KeyS" => Code::KeyS, "T" | "KeyT" => Code::KeyT, "U" | "KeyU" => Code::KeyU,
-        "V" | "KeyV" => Code::KeyV, "W" | "KeyW" => Code::KeyW, "X" | "KeyX" => Code::KeyX,
-        "Y" | "KeyY" => Code::KeyY, "Z" | "KeyZ" => Code::KeyZ,
+        "A" | "KEYA" => Code::KeyA, "B" | "KEYB" => Code::KeyB, "C" | "KEYC" => Code::KeyC,
+        "D" | "KEYD" => Code::KeyD, "E" | "KEYE" => Code::KeyE, "F" | "KEYF" => Code::KeyF,
+        "G" | "KEYG" => Code::KeyG, "H" | "KEYH" => Code::KeyH, "I" | "KEYI" => Code::KeyI,
+        "J" | "KEYJ" => Code::KeyJ, "K" | "KEYK" => Code::KeyK, "L" | "KEYL" => Code::KeyL,
+        "M" | "KEYM" => Code::KeyM, "N" | "KEYN" => Code::KeyN, "O" | "KEYO" => Code::KeyO,
+        "P" | "KEYP" => Code::KeyP, "Q" | "KEYQ" => Code::KeyQ, "R" | "KEYR" => Code::KeyR,
+        "S" | "KEYS" => Code::KeyS, "T" | "KEYT" => Code::KeyT, "U" | "KEYU" => Code::KeyU,
+        "V" | "KEYV" => Code::KeyV, "W" | "KEYW" => Code::KeyW, "X" | "KEYX" => Code::KeyX,
+        "Y" | "KEYY" => Code::KeyY, "Z" | "KEYZ" => Code::KeyZ,
         // Digits
-        "0" | "Digit0" => Code::Digit0, "1" | "Digit1" => Code::Digit1,
-        "2" | "Digit2" => Code::Digit2, "3" | "Digit3" => Code::Digit3,
-        "4" | "Digit4" => Code::Digit4, "5" | "Digit5" => Code::Digit5,
-        "6" | "Digit6" => Code::Digit6, "7" | "Digit7" => Code::Digit7,
-        "8" | "Digit8" => Code::Digit8, "9" | "Digit9" => Code::Digit9,
+        "0" | "DIGIT0" => Code::Digit0, "1" | "DIGIT1" => Code::Digit1,
+        "2" | "DIGIT2" => Code::Digit2, "3" | "DIGIT3" => Code::Digit3,
+        "4" | "DIGIT4" => Code::Digit4, "5" | "DIGIT5" => Code::Digit5,
+        "6" | "DIGIT6" => Code::Digit6, "7" | "DIGIT7" => Code::Digit7,
+        "8" | "DIGIT8" => Code::Digit8, "9" | "DIGIT9" => Code::Digit9,
         // Function keys
         "F1" => Code::F1, "F2" => Code::F2, "F3" => Code::F3, "F4" => Code::F4,
         "F5" => Code::F5, "F6" => Code::F6, "F7" => Code::F7, "F8" => Code::F8,
         "F9" => Code::F9, "F10" => Code::F10, "F11" => Code::F11, "F12" => Code::F12,
         // Other keys
-        "Escape" => Code::Escape, "Tab" => Code::Tab, "Space" => Code::Space,
-        "Enter" => Code::Enter, "Backspace" => Code::Backspace, "Delete" => Code::Delete,
-        "ArrowUp" => Code::ArrowUp, "ArrowDown" => Code::ArrowDown,
-        "ArrowLeft" => Code::ArrowLeft, "ArrowRight" => Code::ArrowRight,
-        "Home" => Code::Home, "End" => Code::End, "PageUp" => Code::PageUp,
-        "PageDown" => Code::PageDown, "Insert" => Code::Insert,
-        _ => return Err(format!("Unsupported key: {}", key_part)),
+        "ESCAPE" => Code::Escape, "TAB" => Code::Tab, "SPACE" => Code::Space,
+        "ENTER" => Code::Enter, "BACKSPACE" => Code::Backspace, "DELETE" => Code::Delete,
+        "ARROWUP" => Code::ArrowUp, "ARROWDOWN" => Code::ArrowDown,
+        "ARROWLEFT" => Code::ArrowLeft, "ARROWRIGHT" => Code::ArrowRight,
+        "HOME" => Code::Home, "END" => Code::End, "PAGEUP" => Code::PageUp,
+        "PAGEDOWN" => Code::PageDown, "INSERT" => Code::Insert,
+        _ => return None,
+    })
+}
+
+/// 解析 "Alt+T" 形式的快捷键字符串。错误信息面向用户，按原因分类：
+/// 格式错误 / 缺少修饰键 / 不支持的修饰键 / 不支持的按键。
+///
+/// 强制要求至少一个修饰键：Windows 的 RegisterHotKey 对无修饰键的热键是全系统独占的，
+/// 一旦注册裸键（如 "T"），其他程序里就敲不出这个键，且该值会持久化到每次启动重新注册。
+fn parse_shortcut_str(s: &str) -> Result<Shortcut, String> {
+    let trimmed = s.trim();
+    if trimmed.is_empty() {
+        return Err("快捷键为空".to_string());
+    }
+    let parts: Vec<&str> = trimmed.split('+').map(|p| p.trim()).collect();
+    let key_part = match parts.last() {
+        Some(k) if !k.is_empty() => *k,
+        _ => return Err(format!("快捷键格式不正确：{}", s)),
     };
 
     let mut modifiers = Modifiers::empty();
-    for part in &parts[..parts.len() - 1] {
-        match part.to_lowercase().as_str() {
-            "ctrl" | "control" => modifiers |= Modifiers::CONTROL,
+    for raw in &parts[..parts.len() - 1] {
+        match raw.to_lowercase().as_str() {
+            "ctrl" | "control" | "cmdorctrl" | "commandorcontrol" => modifiers |= Modifiers::CONTROL,
             "shift" => modifiers |= Modifiers::SHIFT,
-            "alt" => modifiers |= Modifiers::ALT,
-            "meta" | "super" => modifiers |= Modifiers::META,
-            _ => {}
+            "alt" | "option" => modifiers |= Modifiers::ALT,
+            "meta" | "super" | "win" | "windows" => modifiers |= Modifiers::META,
+            "" => return Err(format!("快捷键格式不正确：{}", s)),
+            other => {
+                return Err(format!(
+                    "不支持的修饰键：{}（可用 Ctrl / Shift / Alt / Win）",
+                    other
+                ))
+            }
         }
     }
+    if modifiers.is_empty() {
+        return Err(format!(
+            "快捷键 {} 缺少修饰键：请至少搭配 Ctrl / Shift / Alt / Win 之一",
+            key_part
+        ));
+    }
 
-    let modifier_opt = if modifiers.is_empty() { None } else { Some(modifiers) };
-    Ok(Shortcut::new(modifier_opt, key_code))
+    // 修饰键齐备后优先交给插件解析（覆盖标点、小键盘等更多主键写法）
+    if let Ok(shortcut) = trimmed.parse::<Shortcut>() {
+        return Ok(shortcut);
+    }
+    // 插件不认识 Meta/Win 等别名时走显式映射，保证错误信息可读
+    let key_code = key_code_of(key_part)
+        .ok_or_else(|| format!("不支持的按键：{}（建议字母、数字、F1-F12 或方向键）", key_part))?;
+    Ok(Shortcut::new(Some(modifiers), key_code))
 }
 
 #[tauri::command]
@@ -107,10 +132,11 @@ fn handle_shortcut_event(app: &tauri::AppHandle, _shortcut: &Shortcut, event: Sh
     }
 }
 
-fn register_new(app: &tauri::AppHandle, new_shortcut: Shortcut) -> Result<(), String> {
+/// 注册热键。此处失败只剩"已被占用 / 系统拒绝"一类原因，解析类错误在 parse_shortcut_str 已拦下。
+fn register_new(app: &tauri::AppHandle, new_shortcut: Shortcut, label: &str) -> Result<(), String> {
     app.global_shortcut()
         .on_shortcut(new_shortcut, handle_shortcut_event)
-        .map_err(|e| format!("注册失败，快捷键可能已被其他程序占用: {e}"))
+        .map_err(|_| format!("快捷键 {} 注册失败，可能已被其他程序占用", label))
 }
 
 /// 注册新快捷键并替换旧注册；新键注册失败时旧键保持不变。
@@ -121,9 +147,12 @@ pub fn set_shortcut(app: &tauri::AppHandle, shortcut_str: &str) -> Result<(), St
     if current.as_ref() == Some(&new_shortcut) {
         return Ok(());
     }
-    register_new(app, new_shortcut)?;
+    register_new(app, new_shortcut, shortcut_str)?;
     if let Some(old) = current.take() {
-        let _ = app.global_shortcut().unregister(old);
+        // 旧键没注销掉会和新键同时触发作切换，留痕便于排查
+        if let Err(e) = app.global_shortcut().unregister(old) {
+            eprintln!("[shortcut] 旧快捷键注销失败（可能与新键同时生效）: {e}");
+        }
     }
     *current = Some(new_shortcut);
     Ok(())
@@ -137,7 +166,7 @@ pub fn register_if_unset(app: &tauri::AppHandle, shortcut_str: &str) -> Result<b
     if current.is_some() {
         return Ok(false);
     }
-    register_new(app, new_shortcut)?;
+    register_new(app, new_shortcut, shortcut_str)?;
     *current = Some(new_shortcut);
     Ok(true)
 }

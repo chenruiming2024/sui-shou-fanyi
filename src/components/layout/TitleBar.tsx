@@ -43,7 +43,7 @@ export function TitleBar() {
         <button onClick={() => settingsStore.toggle()} className="w-9 h-7 flex items-center justify-center rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors" title={"设置"}>
           <Settings size={14} className="text-gray-500 dark:text-gray-400" />
         </button>
-        <button onClick={() => { historyStore.toggle(); if (!historyStore.isOpen) historyStore.fetch(); }} className="w-9 h-7 flex items-center justify-center rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors" title={"历史记录"}>
+        <button onClick={() => { const willOpen = !historyStore.isOpen; historyStore.toggle(); if (willOpen) historyStore.fetch(); }} className="w-9 h-7 flex items-center justify-center rounded-md hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors" title={"历史记录"}>
           <History size={14} className="text-gray-500 dark:text-gray-400" />
         </button>
         <button
