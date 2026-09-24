@@ -6,7 +6,7 @@
 
 一个基于 **Tauri 2.0** 构建的轻量级 Windows 桌面翻译工具，使用百度翻译 API，支持多语言互译。输入文本后自动翻译，同时提供剪贴板监听、翻译历史、全局快捷键等实用功能。
 
-安装体积约 3.7 MB（对比同类 Electron 应用通常上百 MB），启动即用，不联网时除翻译外全部功能可用。
+安装体积约 3.7 MB（对比同类 Electron 应用通常上百 MB），需联网和填写百度翻译 API。
 
 ## 下载与安装
 
@@ -191,30 +191,21 @@ sui-shou-fanyi/
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    前端 (WebView)                        │
+│                     前端 (WebView)                      │
 │                                                         │
-│  React + TypeScript + Tailwind CSS                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│  │ 翻译组件  │  │ 设置面板  │  │ 历史抽屉  │              │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
-│       │              │              │                    │
-│  ┌────┴──────────────┴──────────────┴────┐              │
-│  │         Zustand Store (状态管理)        │              │
-│  └────────────────┬──────────────────────┘              │
-│                   │ Tauri invoke()                      │
-├───────────────────┼─────────────────────────────────────┤
-│                   │                                     │
-│  ┌────────────────┴──────────────────────┐              │
-│  │          Tauri Commands (Rust)         │              │
-│  │  translate · history · config · window │              │
-│  └────────────────┬──────────────────────┘              │
-│                   │                                     │
-│  ┌────────────────┴──────────────────────┐              │
-│  │         Services Layer (Rust)          │              │
-│  │  baidu_api · SQLite (rusqlite)         │              │
-│  └───────────────────────────────────────┘              │
+│            React + TypeScript + Tailwind CSS            │
+│          组件：翻译 · 设置 · 历史 · 剪贴板气泡          │
+│                            ↓                            │
+│ 状态层 Zustand：settings · translate · history · toast  │
+│                            ↓ Tauri invoke()             │
+├─────────────────────────────────────────────────────────┤
+│                       后端 (Rust)                       │
 │                                                         │
-│                    后端 (Rust)                           │
+│        commands/   IPC 入口、参数解析与错误映射         │
+│                            ↓                            │
+│ services/   baidu_api（HTTP）· db（SQLite + AppState）  │
+│                            ↓                            │
+│     utils/sign  MD5(appid + q + salt + secret_key)      │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -270,7 +261,7 @@ sui-shou-fanyi/
 
 A lightweight Windows desktop translation utility built on **Tauri 2.0** and backed by the Baidu Translate API. Type to translate automatically, with clipboard watching, translation history, and a global shortcut.
 
-The installer is roughly 3.7 MB — an order of magnitude smaller than comparable Electron apps — and everything except the translation request itself works offline.
+The installer is roughly 3.7 MB (an order of magnitude smaller than comparable Electron apps). It requires an internet connection and your own Baidu Translate API credentials.
 
 ## Download & Install
 
@@ -432,14 +423,14 @@ The app follows the standard Tauri 2.0 split: React renders the UI inside a WebV
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     Frontend (WebView)                   │
+│                     Frontend (WebView)                  │
 │   React + TypeScript + Tailwind CSS                     │
 │   components (translate · settings · history)           │
 │            ↓                                            │
-│   Zustand stores (settings · translate · history · toast)│
+│  Zustand stores (settings · translate · history · toast)│
 │            ↓ Tauri invoke()                             │
 ├─────────────────────────────────────────────────────────┤
-│                     Backend (Rust)                       │
+│                     Backend (Rust)                      │
 │   commands/   IPC entry points and error mapping        │
 │            ↓                                            │
 │   services/   baidu_api (HTTP) · db (SQLite, AppState)  │
